@@ -1,5 +1,6 @@
 import mcp from 'k6/x/mcp';
 
+// Initialize MCP Client
 const client = new mcp.StdioClient({
   path: 'npx',
   env: [],
@@ -7,23 +8,27 @@ const client = new mcp.StdioClient({
 });
 
 export default function () {
-  console.log('Is MCP server running?', client.ping());
+  console.log('Checking MCP server status...');
+  console.log('MCP server running:', client.ping());
 
+  // List available tools
   console.log('Tools available:');
-  var tools = client.listTools().tools;
-  for (var i = 0; i < tools.length; i++) {
-    console.log(`\t`,tools[i].name);
-  }
+  const tools = client.listTools().tools;
+  tools.forEach(tool => console.log(`  - ${tool.name}`));
 
+  // List available resources
   console.log('Resources available:');
-  var resources = client.listResources().resources;
-  for (var i = 0; i < resources.length; i++) {
-    console.log(`\t`,resources[i].uri);
-  }
+  const resources = client.listResources().resources;
+  resources.forEach(resource => console.log(`  - ${resource.uri}`));
 
+  // List available prompts
   console.log('Prompts available:');
-  var prompts = client.listPrompts().prompts;
-  for (var i = 0; i < prompts.length; i++) {
-    console.log(`\t`,prompts[i].name);
-  }
+  const prompts = client.listPrompts().prompts;
+  prompts.forEach(prompt => console.log(`  - ${prompt.name}`));
+
+  // Call a sample tool
+  const result = client.callTool({
+    params: { name: 'echo', arguments: { message: 'Hello, world!' } }
+  });
+  console.log('Echo tool response:', result.content[0].text);
 }

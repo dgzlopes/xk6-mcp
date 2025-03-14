@@ -128,6 +128,15 @@ func (c *Client) ListTools(r mcp.ListToolsRequest) (*mcp.ListToolsResult, error)
 	return tools, nil
 }
 
+// CallTool calls a tool in MCP
+func (c *Client) CallTool(r mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+	result, err := c.mcp_client.CallTool(context.Background(), r)
+	if err != nil {
+		return &mcp.CallToolResult{}, err
+	}
+	return result, nil
+}
+
 // ListResources returns available resources in MCP
 func (c *Client) ListResources(r mcp.ListResourcesRequest) (*mcp.ListResourcesResult, error) {
 	resources, err := c.mcp_client.ListResources(context.Background(), r)
@@ -137,6 +146,15 @@ func (c *Client) ListResources(r mcp.ListResourcesRequest) (*mcp.ListResourcesRe
 	return resources, nil
 }
 
+// ReadResource reads a resource in MCP
+func (c *Client) ReadResource(r mcp.ReadResourceRequest) (*mcp.ReadResourceResult, error) {
+	resource, err := c.mcp_client.ReadResource(context.Background(), r)
+	if err != nil {
+		return &mcp.ReadResourceResult{}, err
+	}
+	return resource, nil
+}
+
 // ListPrompts returns available prompts in MCP
 func (c *Client) ListPrompts(r mcp.ListPromptsRequest) (*mcp.ListPromptsResult, error) {
 	prompts, err := c.mcp_client.ListPrompts(context.Background(), r)
@@ -144,4 +162,13 @@ func (c *Client) ListPrompts(r mcp.ListPromptsRequest) (*mcp.ListPromptsResult, 
 		return &mcp.ListPromptsResult{}, err
 	}
 	return prompts, nil
+}
+
+// GetPrompt returns a prompt in MCP
+func (c *Client) GetPrompt(r mcp.GetPromptRequest) (*mcp.GetPromptResult, error) {
+	prompt, err := c.mcp_client.GetPrompt(context.Background(), r)
+	if err != nil {
+		return &mcp.GetPromptResult{}, err
+	}
+	return prompt, nil
 }
