@@ -120,28 +120,28 @@ func (c *Client) Ping() bool {
 }
 
 // ListTools returns available tools in MCP
-func (c *Client) ListTools(r mcp.ListToolsRequest) ([]mcp.Tool, error) {
+func (c *Client) ListTools(r mcp.ListToolsRequest) (*mcp.ListToolsResult, error) {
 	tools, err := c.mcp_client.ListTools(context.Background(), r)
 	if err != nil {
-		return nil, err
+		return &mcp.ListToolsResult{}, err
 	}
-	return tools.Tools, nil
+	return tools, nil
 }
 
 // ListResources returns available resources in MCP
-func (c *Client) ListResources(r mcp.ListResourcesRequest) ([]mcp.Resource, error) {
+func (c *Client) ListResources(r mcp.ListResourcesRequest) (*mcp.ListResourcesResult, error) {
 	resources, err := c.mcp_client.ListResources(context.Background(), r)
 	if err != nil {
-		return nil, err
+		return &mcp.ListResourcesResult{}, err
 	}
-	return resources.Resources, nil
+	return resources, nil
 }
 
 // ListPrompts returns available prompts in MCP
-func (c *Client) ListPrompts(r mcp.ListPromptsRequest) ([]mcp.Prompt, error) {
+func (c *Client) ListPrompts(r mcp.ListPromptsRequest) (*mcp.ListPromptsResult, error) {
 	prompts, err := c.mcp_client.ListPrompts(context.Background(), r)
 	if err != nil {
-		return nil, err
+		return &mcp.ListPromptsResult{}, err
 	}
-	return prompts.Prompts, nil
+	return prompts, nil
 }
