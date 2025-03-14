@@ -27,8 +27,20 @@ export default function () {
   prompts.forEach(prompt => console.log(`  - ${prompt.name}`));
 
   // Call a sample tool
-  const result = client.callTool({
+  const toolResult = client.callTool({
     params: { name: 'echo', arguments: { message: 'Hello, world!' } }
   });
-  console.log('Echo tool response:', result.content[0].text);
+  console.log('Echo tool response:', toolResult.content[0].text);
+
+  // Read a sample resource
+  const resourceContent = client.readResource({
+    params: { uri: 'test://static/resource/1' }
+  });
+  console.log('Resource content:', resourceContent.contents[0].text);
+
+  // Get a sample prompt
+  const prompt = client.getPrompt({
+    params: { name: 'simple_prompt' }
+  });
+  console.log('Prompt:', prompt.messages[0].content.text);
 }
