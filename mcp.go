@@ -13,7 +13,6 @@ import (
 	"go.k6.io/k6/js/modules"
 )
 
-// Register the module with k6
 func init() {
 	modules.Register("k6/x/mcp", new(MCP))
 }
@@ -40,135 +39,119 @@ type MCPInstance struct {
 func (m *MCPInstance) Exports() modules.Exports {
 	return modules.Exports{
 		Named: map[string]interface{}{
-			"StdioClient": m.stdioClient,
+			"StdioClient": m.newStdioClient,
+			"SSEClient":   m.newSSEClient,
 		},
 	}
 }
 
-// Client represents the MCP client
-type Client struct {
-	mcp_client *client.StdioMCPClient
-}
-
 // ClientConfig represents the configuration for the MCP client
 type ClientConfig struct {
-	Path string
-	Args []string
-	Env  map[string]string
+	Path    string
+	Args    []string
+	Env     map[string]string
+	BaseURL string
+	Headers map[string]string
+	Timeout time.Duration
 }
 
-// client constructor for JavaScript runtime
-// Usage in JS: `const client = new mcp.StdioClient();`
-func (m *MCPInstance) stdioClient(c sobek.ConstructorCall, rt *sobek.Runtime) *sobek.Object {
+// Client wraps an MCPClient
+type Client struct {
+	mcp_client client.MCPClient
+}
+
+func (m *MCPInstance) newStdioClient(c sobek.ConstructorCall, rt *sobek.Runtime) *sobek.Object {
 	var cfg ClientConfig
 	err := rt.ExportTo(c.Argument(0), &cfg)
 	if err != nil {
-		common.Throw(rt, fmt.Errorf("unable to create client: constructor expects first argument to be ClientConfig: %w", err))
+		common.Throw(rt, fmt.Errorf("invalid config: %w", err))
 	}
 
-	if cfg.Path == "" {
-		common.Throw(rt, fmt.Errorf("unable to create client: path is required"))
-	}
-
-	if cfg.Args == nil {
-		cfg.Args = []string{}
-	}
-
-	if cfg.Env == nil {
-		cfg.Env = map[string]string{}
-	}
-
-	env := []string{}
-	for k, v := range cfg.Env {
-		env = append(env, fmt.Sprintf("%s=%s", k, v))
-	}
-
-	mcp_client, err := client.NewStdioMCPClient(cfg.Path, env, cfg.Args...)
+	stdioClient, err := createStdioClient(cfg)
 	if err != nil {
-		common.Throw(rt, fmt.Errorf("unable to create MCP client: %w", err))
+		common.Throw(rt, fmt.Errorf("Stdio client error: %w", err))
 	}
 
+	return m.initializeClient(rt, stdioClient)
+}
+
+func (m *MCPInstance) newSSEClient(c sobek.ConstructorCall, rt *sobek.Runtime) *sobek.Object {
+	var cfg ClientConfig
+	err := rt.ExportTo(c.Argument(0), &cfg)
+	if err != nil {
+		common.Throw(rt, fmt.Errorf("invalid config: %w", err))
+	}
+
+	sseClient, err := createSSEClient(cfg)
+	if err != nil {
+		common.Throw(rt, fmt.Errorf("SSE client error: %w", err))
+	}
+
+	return m.initializeClient(rt, sseClient)
+}
+
+func (m *MCPInstance) initializeClient(rt *sobek.Runtime, cl client.MCPClient) *sobek.Object {
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
-	initRequest := mcp.InitializeRequest{}
-	initRequest.Params.ProtocolVersion = mcp.LATEST_PROTOCOL_VERSION
-	initRequest.Params.ClientInfo = mcp.Implementation{
+	initReq := mcp.InitializeRequest{}
+	initReq.Params.ProtocolVersion = mcp.LATEST_PROTOCOL_VERSION
+	initReq.Params.ClientInfo = mcp.Implementation{
 		Name:    "k6",
 		Version: "1.0.0",
 	}
 
-	_, err = mcp_client.Initialize(ctx, initRequest)
-	if err != nil {
-		common.Throw(rt, fmt.Errorf("unable to initialize MCP client: %w", err))
+	if _, err := cl.Initialize(ctx, initReq); err != nil {
+		common.Throw(rt, fmt.Errorf("initialize error: %w", err))
 	}
 
-	client := &Client{
-		mcp_client: mcp_client,
-	}
-
-	return rt.ToValue(client).ToObject(rt)
+	return rt.ToValue(&Client{mcp_client: cl}).ToObject(rt)
 }
 
-// Ping checks if the MCP server is alive
+func createStdioClient(cfg ClientConfig) (*client.StdioMCPClient, error) {
+	env := []string{}
+	for k, v := range cfg.Env {
+		env = append(env, fmt.Sprintf("%s=%s", k, v))
+	}
+	return client.NewStdioMCPClient(cfg.Path, env, cfg.Args...)
+}
+
+func createSSEClient(cfg ClientConfig) (*client.SSEMCPClient, error) {
+	opts := []client.ClientOption{}
+	if cfg.Headers != nil {
+		opts = append(opts, client.WithHeaders(cfg.Headers))
+	}
+	if cfg.Timeout > 0 {
+		opts = append(opts, client.WithSSEReadTimeout(cfg.Timeout))
+	}
+	return client.NewSSEMCPClient(cfg.BaseURL, opts...)
+}
+
 func (c *Client) Ping() bool {
 	err := c.mcp_client.Ping(context.Background())
-	if err != nil {
-		return false
-	}
-	return true
+	return err == nil
 }
 
-// ListTools returns available tools in MCP
 func (c *Client) ListTools(r mcp.ListToolsRequest) (*mcp.ListToolsResult, error) {
-	tools, err := c.mcp_client.ListTools(context.Background(), r)
-	if err != nil {
-		return &mcp.ListToolsResult{}, err
-	}
-	return tools, nil
+	return c.mcp_client.ListTools(context.Background(), r)
 }
 
-// CallTool calls a tool in MCP
 func (c *Client) CallTool(r mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-	result, err := c.mcp_client.CallTool(context.Background(), r)
-	if err != nil {
-		return &mcp.CallToolResult{}, err
-	}
-	return result, nil
+	return c.mcp_client.CallTool(context.Background(), r)
 }
 
-// ListResources returns available resources in MCP
 func (c *Client) ListResources(r mcp.ListResourcesRequest) (*mcp.ListResourcesResult, error) {
-	resources, err := c.mcp_client.ListResources(context.Background(), r)
-	if err != nil {
-		return &mcp.ListResourcesResult{}, err
-	}
-	return resources, nil
+	return c.mcp_client.ListResources(context.Background(), r)
 }
 
-// ReadResource reads a resource in MCP
 func (c *Client) ReadResource(r mcp.ReadResourceRequest) (*mcp.ReadResourceResult, error) {
-	resource, err := c.mcp_client.ReadResource(context.Background(), r)
-	if err != nil {
-		return &mcp.ReadResourceResult{}, err
-	}
-	return resource, nil
+	return c.mcp_client.ReadResource(context.Background(), r)
 }
 
-// ListPrompts returns available prompts in MCP
 func (c *Client) ListPrompts(r mcp.ListPromptsRequest) (*mcp.ListPromptsResult, error) {
-	prompts, err := c.mcp_client.ListPrompts(context.Background(), r)
-	if err != nil {
-		return &mcp.ListPromptsResult{}, err
-	}
-	return prompts, nil
+	return c.mcp_client.ListPrompts(context.Background(), r)
 }
 
-// GetPrompt returns a prompt in MCP
 func (c *Client) GetPrompt(r mcp.GetPromptRequest) (*mcp.GetPromptResult, error) {
-	prompt, err := c.mcp_client.GetPrompt(context.Background(), r)
-	if err != nil {
-		return &mcp.GetPromptResult{}, err
-	}
-	return prompt, nil
+	return c.mcp_client.GetPrompt(context.Background(), r)
 }
