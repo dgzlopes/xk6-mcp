@@ -29,7 +29,7 @@ import mcp from 'k6/x/mcp';
 ```javascript
 import mcp from 'k6/x/mcp';
 
-// Initialize MCP Client
+// Initialize MCP Client with stdio transport
 const client = new mcp.StdioClient({
   path: 'npx',
   env: [],
@@ -73,4 +73,19 @@ export default function () {
   });
   console.log('Prompt:', prompt.messages[0].content.text);
 }
+```
+
+You can also use the SSE transport to connect to an MCP server that supports it:
+
+```javascript
+const client = new mcp.SSEClient({
+  baseURL: 'http://localhost:3001/sse',
+  headers: { Authorization: 'Bearer abc123' },
+  timeout: '30s'
+});
+```
+
+Run the SSE server with: 
+```bash
+docker run -p 3001:3001 --rm -it tzolov/mcp-everything-server:v1
 ```

@@ -47,9 +47,12 @@ func (m *MCPInstance) Exports() modules.Exports {
 
 // ClientConfig represents the configuration for the MCP client
 type ClientConfig struct {
-	Path    string
-	Args    []string
-	Env     map[string]string
+	// Stdio
+	Path string
+	Args []string
+	Env  map[string]string
+
+	// SSE
 	BaseURL string
 	Headers map[string]string
 	Timeout time.Duration

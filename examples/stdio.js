@@ -1,6 +1,6 @@
 import mcp from 'k6/x/mcp';
 
-// Initialize MCP Client
+// Initialize MCP Client with stdio transport
 const client = new mcp.StdioClient({
   path: 'npx',
   env: [],
