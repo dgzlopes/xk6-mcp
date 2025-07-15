@@ -26,7 +26,7 @@ import mcp from 'k6/x/mcp';
 
 ## Example
 
-> ⚠️ This example depends on [mcp-example-server](https://github.com/dgzlopes/mcp-example-server). 
+> ⚠️ This example depends on [mcp-example-server](https://github.com/dgzlopes/mcp-example-server).   
 > You can download the latest version from the releases page.
 
 ```javascript
