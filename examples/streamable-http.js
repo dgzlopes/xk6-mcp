@@ -3,7 +3,7 @@ import mcp from 'k6/x/mcp';
 export default function () {
   // Initialize MCP Client with streamable HTTP transport
   const client = new mcp.StreamableHTTPClient({
-    base_url: 'http://localhost:3001', // adjust as needed
+    base_url: 'http://localhost:3001',
   });
 
   // Check connection to MCP HTTP server
