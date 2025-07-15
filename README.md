@@ -70,9 +70,11 @@ export default function () {
 }
 ```
 
+### F.A.Q.
+
 ### What about non-stdio transports?
 
-Yeah, SSE and Streamable HTTP are supported too! 
+Both SSE and Streamable HTTP are supported too! 
 
 You can use them like this:
 
@@ -86,4 +88,19 @@ const client = new mcp.SSEClient({
 const client = new mcp.StreamableHTTPClient({
     base_url: 'http://localhost:3001',
 });
+```
+
+#### What about pagination?
+
+The extension offers two ways to list resources, tools, and prompts:
+
+```javascript
+// With All: Handles pagination automatically
+const allTools = client.listAllTools();
+const allResources = client.listAllResources();
+const allPrompts = client.listAllPrompts();
+
+// Without All: Requires manual pagination
+const first = client.listTools()
+const second = client.listTools({ cursor: first.next_cursor });
 ```
