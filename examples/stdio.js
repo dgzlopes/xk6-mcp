@@ -4,6 +4,7 @@ export default function () {
   // Initialize MCP Client with stdio transport
   const client = new mcp.StdioClient({
     path: './mcp-example-server',
+    args: ['--stdio'],
   });
 
   // Check connection to MCP server

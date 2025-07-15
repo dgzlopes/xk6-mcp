@@ -56,8 +56,9 @@ type Client struct {
 func (m *MCPInstance) Exports() modules.Exports {
 	return modules.Exports{
 		Named: map[string]interface{}{
-			"StdioClient": m.newStdioClient,
-			"SSEClient":   m.newSSEClient,
+			"StdioClient":          m.newStdioClient,
+			"SSEClient":            m.newSSEClient,
+			"StreamableHTTPClient": m.newStreamableHTTPClient,
 		},
 	}
 }
@@ -90,7 +91,16 @@ func (m *MCPInstance) newSSEClient(c sobek.ConstructorCall, rt *sobek.Runtime) *
 	return m.connect(rt, transport, true)
 }
 
-// connect now takes an isSSE flag to determine context lifetime
+func (m *MCPInstance) newStreamableHTTPClient(c sobek.ConstructorCall, rt *sobek.Runtime) *sobek.Object {
+	var cfg ClientConfig
+	if err := rt.ExportTo(c.Argument(0), &cfg); err != nil {
+		common.Throw(rt, fmt.Errorf("invalid config: %w", err))
+	}
+
+	transport := mcp.NewStreamableClientTransport(cfg.BaseURL, nil)
+	return m.connect(rt, transport, true)
+}
+
 func (m *MCPInstance) connect(rt *sobek.Runtime, transport mcp.Transport, isSSE bool) *sobek.Object {
 	var ctx context.Context
 	var cancel context.CancelFunc
