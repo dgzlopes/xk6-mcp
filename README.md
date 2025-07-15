@@ -26,66 +26,92 @@ import mcp from 'k6/x/mcp';
 
 ## Example
 
+> ⚠️ This example depends on [mcp-example-server](https://github.com/dgzlopes/mcp-example-server). 
+> You can download the latest version from the releases page.
+
 ```javascript
 import mcp from 'k6/x/mcp';
 
-// Initialize MCP Client with stdio transport
-const client = new mcp.StdioClient({
-  path: 'npx',
-  env: [],
-  args: ['-y', '@modelcontextprotocol/server-everything', '/tmp'],
-});
-
 export default function () {
-  console.log('Checking MCP server status...');
+  // Initialize MCP Client with stdio transport
+  const client = new mcp.StdioClient({
+    path: './mcp-example-server',
+  });
+
+  // Check connection to MCP server
   console.log('MCP server running:', client.ping());
 
-  // List available tools
+  // List all available tools
   console.log('Tools available:');
-  const tools = client.listTools().tools;
+  const tools = client.listAllTools().tools;
   tools.forEach(tool => console.log(`  - ${tool.name}`));
 
-  // List available resources
+  // List all available resources
   console.log('Resources available:');
-  const resources = client.listResources().resources;
+  const resources = client.listAllResources().resources;
   resources.forEach(resource => console.log(`  - ${resource.uri}`));
 
-  // List available prompts
+  // List all available prompts
   console.log('Prompts available:');
-  const prompts = client.listPrompts().prompts;
+  const prompts = client.listAllPrompts().prompts;
   prompts.forEach(prompt => console.log(`  - ${prompt.name}`));
 
   // Call a sample tool
-  const toolResult = client.callTool({
-    params: { name: 'echo', arguments: { message: 'Hello, world!' } }
-  });
-  console.log('Echo tool response:', toolResult.content[0].text);
+  const toolResult = client.callTool({ name: 'greet', arguments: { name: 'Grafana k6' } });
+  console.log(`Greet tool response: "${toolResult.content[0].text}"`);
 
   // Read a sample resource
-  const resourceContent = client.readResource({
-    params: { uri: 'test://static/resource/1' }
-  });
-  console.log('Resource content:', resourceContent.contents[0].text);
+  const resourceContent = client.readResource({ uri: 'embedded:info' });
+  console.log(`Resource content: ${resourceContent.contents[0].text}`);
 
   // Get a sample prompt
-  const prompt = client.getPrompt({
-    params: { name: 'simple_prompt' }
-  });
-  console.log('Prompt:', prompt.messages[0].content.text);
+  const prompt = client.getPrompt({ name: 'greet' });
+  console.log(`Prompt: ${prompt.messages[0].content.text}`);
 }
 ```
 
-You can also use the SSE transport to connect to an MCP server that supports it:
+### F.A.Q.
+
+### What about non-stdio transports?
+
+Both SSE and Streamable HTTP are supported too! 
+
+You can use them like this:
 
 ```javascript
+// SSE
 const client = new mcp.SSEClient({
-  baseURL: 'http://localhost:3001/sse',
-  headers: { Authorization: 'Bearer abc123' },
-  timeout: '30s'
+    base_url: 'http://localhost:3002',
+});
+
+// Streamable HTTP
+const client = new mcp.StreamableHTTPClient({
+    base_url: 'http://localhost:3001',
 });
 ```
 
-Run the SSE server with: 
-```bash
-docker run -p 3001:3001 --rm -it tzolov/mcp-everything-server:v1
+#### What about pagination?
+
+The extension offers two ways to list resources, tools, and prompts:
+
+```javascript
+// With All: Handles pagination automatically
+const allTools = client.listAllTools();
+const allResources = client.listAllResources();
+const allPrompts = client.listAllPrompts();
+
+// Without All: Requires manual pagination
+const first = client.listTools()
+const second = client.listTools({ cursor: first.next_cursor });
 ```
+
+#### What about metrics?
+
+The extension automatically tracks RED-style metrics for every MCP operation:
+
+- `mcp_request_duration` (trend): Duration of each MCP request (in milliseconds).
+- `mcp_request_count` (counter): Number of MCP requests made.
+- `mcp_request_errors` (counter): Number of failed MCP requests.
+
+Each metric is tagged wit:
+- `method`: The MCP method called (e.g., `GetPrompt`, `ListTools`).
