@@ -104,3 +104,14 @@ const allPrompts = client.listAllPrompts();
 const first = client.listTools()
 const second = client.listTools({ cursor: first.next_cursor });
 ```
+
+#### What about metrics?
+
+The extension automatically tracks RED-style metrics for every MCP operation:
+
+- `mcp_request_duration` (trend): Duration of each MCP request (in milliseconds).
+- `mcp_request_count` (counter): Number of MCP requests made.
+- `mcp_request_errors` (counter): Number of failed MCP requests.
+
+Each metric is tagged wit:
+- `method`: The MCP method called (e.g., `GetPrompt`, `ListTools`).
