@@ -26,7 +26,7 @@ import mcp from 'k6/x/mcp';
 
 ## Example
 
-Important: This example depends on having the [mcp-example-server](https://github.com/dgzlopes/mcp-example-server) binary located in the same directory as your script. You can download it from the latest release.
+> ⚠️ This example depends on [mcp-example-server](https://github.com/dgzlopes/mcp-example-server). You can download the latest version from the releases page.
 
 ```javascript
 import mcp from 'k6/x/mcp';
@@ -69,19 +69,19 @@ export default function () {
 }
 ```
 
-### What about SSE and Streamable HTTP?
+### What about non-stdio transports?
 
-Yeah, they are supported too! 
+Yeah, SSE and Streamable HTTP are supported too! 
 
 You can use them like this:
 
 ```javascript
-# SSE
+// SSE
 const client = new mcp.SSEClient({
     base_url: 'http://localhost:3002',
 });
 
-# Streamable HTTP
+// Streamable HTTP
 const client = new mcp.StreamableHTTPClient({
     base_url: 'http://localhost:3001',
 });
