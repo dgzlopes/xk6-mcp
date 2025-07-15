@@ -16,7 +16,7 @@ function createClient() {
     }
     if (clientType === 'http') {
         return new mcp.StreamableHTTPClient({
-            base_url: 'http://localhost:3003',
+            base_url: 'http://localhost:3001',
         });
     }
     throw new Error(`Unknown MCP_CLIENT: ${clientType}`);

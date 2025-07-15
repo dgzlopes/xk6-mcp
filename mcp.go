@@ -2,7 +2,9 @@ package compare
 
 import (
 	"context"
+	"crypto/tls"
 	"fmt"
+	"net/http"
 	"os/exec"
 	"time"
 
@@ -86,7 +88,9 @@ func (m *MCPInstance) newSSEClient(c sobek.ConstructorCall, rt *sobek.Runtime) *
 		common.Throw(rt, fmt.Errorf("invalid config: %w", err))
 	}
 
-	transport := mcp.NewSSEClientTransport(cfg.BaseURL, nil)
+	transport := mcp.NewSSEClientTransport(cfg.BaseURL, &mcp.SSEClientTransportOptions{
+		HTTPClient: m.newk6HTTPClient(),
+	})
 
 	return m.connect(rt, transport, true)
 }
@@ -97,8 +101,30 @@ func (m *MCPInstance) newStreamableHTTPClient(c sobek.ConstructorCall, rt *sobek
 		common.Throw(rt, fmt.Errorf("invalid config: %w", err))
 	}
 
-	transport := mcp.NewStreamableClientTransport(cfg.BaseURL, nil)
+	transport := mcp.NewStreamableClientTransport(cfg.BaseURL, &mcp.StreamableClientTransportOptions{
+		HTTPClient: m.newk6HTTPClient(),
+	})
+
 	return m.connect(rt, transport, true)
+}
+
+func (m *MCPInstance) newk6HTTPClient() *http.Client {
+	var tlsConfig *tls.Config
+	if m.vu.State().TLSConfig != nil {
+		tlsConfig = m.vu.State().TLSConfig.Clone()
+		tlsConfig.NextProtos = []string{"http/1.1"}
+	}
+
+	httpClient := &http.Client{
+		Transport: &http.Transport{
+			DialContext:       m.vu.State().Dialer.DialContext,
+			Proxy:             http.ProxyFromEnvironment,
+			TLSClientConfig:   tlsConfig,
+			DisableKeepAlives: m.vu.State().Options.NoConnectionReuse.ValueOrZero() || m.vu.State().Options.NoVUConnectionReuse.ValueOrZero(),
+		},
+	}
+
+	return httpClient
 }
 
 func (m *MCPInstance) connect(rt *sobek.Runtime, transport mcp.Transport, isSSE bool) *sobek.Object {
