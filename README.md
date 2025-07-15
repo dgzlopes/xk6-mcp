@@ -2,6 +2,9 @@
 
 A k6 extension for testing [Model Context Protocol (MCP)](https://modelcontextprotocol.io/introduction) servers.
 
+> [!IMPORTANT]
+> This extension is experimental and not officially supported by Grafana Labs.
+
 ## Installation
 
 1. First, ensure you have [xk6](https://github.com/grafana/xk6) installed:
