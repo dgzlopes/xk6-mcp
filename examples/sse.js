@@ -6,7 +6,7 @@ export default function () {
     base_url: 'http://localhost:3002',
   });
 
-  console.log('Checking MCP server status...');
+  // Check connection to MCP server
   console.log('MCP server running:', client.ping());
 
   // List all available tools
@@ -25,14 +25,14 @@ export default function () {
   prompts.forEach(prompt => console.log(`  - ${prompt.name}`));
 
   // Call a sample tool
-  const toolResult = client.callTool({ name: 'echo', arguments: { message: 'Hello, world!' } });
-  console.log(`Echo tool response: "${toolResult.content[0].text}"`);
+  const toolResult = client.callTool({ name: 'greet', arguments: { name: 'Grafana k6' } });
+  console.log(`Greet tool response: "${toolResult.content[0].text}"`);
 
   // Read a sample resource
-  const resourceContent = client.readResource({ uri: 'test://static/resource/1' });
+  const resourceContent = client.readResource({ uri: 'embedded:info' });
   console.log(`Resource content: ${resourceContent.contents[0].text}`);
 
   // Get a sample prompt
-  const prompt = client.getPrompt({ name: 'simple_prompt' });
+  const prompt = client.getPrompt({ name: 'greet' });
   console.log(`Prompt: ${prompt.messages[0].content.text}`);
 }

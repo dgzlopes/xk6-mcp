@@ -76,7 +76,7 @@ func (m *MCPInstance) newStdioClient(c sobek.ConstructorCall, rt *sobek.Runtime)
 
 	transport := mcp.NewCommandTransport(cmd)
 
-	return m.connect(rt, transport)
+	return m.connect(rt, transport, false)
 }
 
 func (m *MCPInstance) newSSEClient(c sobek.ConstructorCall, rt *sobek.Runtime) *sobek.Object {
@@ -87,11 +87,19 @@ func (m *MCPInstance) newSSEClient(c sobek.ConstructorCall, rt *sobek.Runtime) *
 
 	transport := mcp.NewSSEClientTransport(cfg.BaseURL, nil)
 
-	return m.connect(rt, transport)
+	return m.connect(rt, transport, true)
 }
 
-func (m *MCPInstance) connect(rt *sobek.Runtime, transport mcp.Transport) *sobek.Object {
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+// connect now takes an isSSE flag to determine context lifetime
+func (m *MCPInstance) connect(rt *sobek.Runtime, transport mcp.Transport, isSSE bool) *sobek.Object {
+	var ctx context.Context
+	var cancel context.CancelFunc
+	if isSSE {
+		ctx = context.Background()
+		cancel = func() {}
+	} else {
+		ctx, cancel = context.WithTimeout(context.Background(), 30*time.Second)
+	}
 	defer cancel()
 
 	client := mcp.NewClient("k6", "1.0.0", nil)
