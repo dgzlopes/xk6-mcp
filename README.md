@@ -26,66 +26,44 @@ import mcp from 'k6/x/mcp';
 
 ## Example
 
+> This example depends on having the [mcp-example-server](https://github.com/dgzlopes/mcp-example-server) binary located in the same directory as your script.
 ```javascript
 import mcp from 'k6/x/mcp';
 
-// Initialize MCP Client with stdio transport
-const client = new mcp.StdioClient({
-  path: 'npx',
-  env: [],
-  args: ['-y', '@modelcontextprotocol/server-everything', '/tmp'],
-});
-
 export default function () {
-  console.log('Checking MCP server status...');
+  // Initialize MCP Client with stdio transport
+  const client = new mcp.StdioClient({
+    path: './mcp-example-server',
+  });
+
+  // Check connection to MCP server
   console.log('MCP server running:', client.ping());
 
-  // List available tools
+  // List all available tools
   console.log('Tools available:');
-  const tools = client.listTools().tools;
+  const tools = client.listAllTools().tools;
   tools.forEach(tool => console.log(`  - ${tool.name}`));
 
-  // List available resources
+  // List all available resources
   console.log('Resources available:');
-  const resources = client.listResources().resources;
+  const resources = client.listAllResources().resources;
   resources.forEach(resource => console.log(`  - ${resource.uri}`));
 
-  // List available prompts
+  // List all available prompts
   console.log('Prompts available:');
-  const prompts = client.listPrompts().prompts;
+  const prompts = client.listAllPrompts().prompts;
   prompts.forEach(prompt => console.log(`  - ${prompt.name}`));
 
   // Call a sample tool
-  const toolResult = client.callTool({
-    params: { name: 'echo', arguments: { message: 'Hello, world!' } }
-  });
-  console.log('Echo tool response:', toolResult.content[0].text);
+  const toolResult = client.callTool({ name: 'greet', arguments: { name: 'Grafana k6' } });
+  console.log(`Greet tool response: "${toolResult.content[0].text}"`);
 
   // Read a sample resource
-  const resourceContent = client.readResource({
-    params: { uri: 'test://static/resource/1' }
-  });
-  console.log('Resource content:', resourceContent.contents[0].text);
+  const resourceContent = client.readResource({ uri: 'embedded:info' });
+  console.log(`Resource content: ${resourceContent.contents[0].text}`);
 
   // Get a sample prompt
-  const prompt = client.getPrompt({
-    params: { name: 'simple_prompt' }
-  });
-  console.log('Prompt:', prompt.messages[0].content.text);
+  const prompt = client.getPrompt({ name: 'greet' });
+  console.log(`Prompt: ${prompt.messages[0].content.text}`);
 }
-```
-
-You can also use the SSE transport to connect to an MCP server that supports it:
-
-```javascript
-const client = new mcp.SSEClient({
-  baseURL: 'http://localhost:3001/sse',
-  headers: { Authorization: 'Bearer abc123' },
-  timeout: '30s'
-});
-```
-
-Run the SSE server with: 
-```bash
-docker run -p 3001:3001 --rm -it tzolov/mcp-everything-server:v1
 ```

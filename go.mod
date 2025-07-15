@@ -6,7 +6,7 @@ toolchain go1.23.7
 
 require (
 	github.com/grafana/sobek v0.0.0-20250320150027-203dc85b6d98
-	github.com/mark3labs/mcp-go v0.17.0
+	github.com/modelcontextprotocol/go-sdk v0.1.0
 	github.com/sirupsen/logrus v1.9.3
 	go.k6.io/k6 v0.57.0
 )
@@ -32,7 +32,6 @@ require (
 	github.com/onsi/gomega v1.36.3 // indirect
 	github.com/serenize/snaker v0.0.0-20201027110005-a7ad2135616e // indirect
 	github.com/spf13/afero v1.14.0 // indirect
-	github.com/yosida95/uritemplate/v3 v3.0.2 // indirect
 	go.opentelemetry.io/auto/sdk v1.1.0 // indirect
 	go.opentelemetry.io/otel v1.35.0 // indirect
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace v1.35.0 // indirect
