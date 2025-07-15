@@ -26,7 +26,8 @@ import mcp from 'k6/x/mcp';
 
 ## Example
 
-> This example depends on having the [mcp-example-server](https://github.com/dgzlopes/mcp-example-server) binary located in the same directory as your script.
+Important: This example depends on having the [mcp-example-server](https://github.com/dgzlopes/mcp-example-server) binary located in the same directory as your script. You can download it from the latest release.
+
 ```javascript
 import mcp from 'k6/x/mcp';
 
@@ -66,4 +67,22 @@ export default function () {
   const prompt = client.getPrompt({ name: 'greet' });
   console.log(`Prompt: ${prompt.messages[0].content.text}`);
 }
+```
+
+### What about SSE and Streamable HTTP?
+
+Yeah, they are supported too! 
+
+You can use them like this:
+
+```javascript
+# SSE
+const client = new mcp.SSEClient({
+    base_url: 'http://localhost:3002',
+});
+
+# Streamable HTTP
+const client = new mcp.StreamableHTTPClient({
+    base_url: 'http://localhost:3001',
+});
 ```
