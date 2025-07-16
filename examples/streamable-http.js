@@ -1,31 +1,11 @@
 import mcp from 'k6/x/mcp';
 
-const clientType = __ENV.MCP_CLIENT || 'stdio';
-
-function createClient() {
-    if (clientType === 'stdio') {
-        return new mcp.StdioClient({
-            path: './mcp-example-server',
-            args: ['--stdio'],
-        });
-    }
-    if (clientType === 'sse') {
-        return new mcp.SSEClient({
-            base_url: 'http://localhost:3002',
-        });
-    }
-    if (clientType === 'http') {
-        return new mcp.StreamableHTTPClient({
-            base_url: 'http://localhost:3001',
-        });
-    }
-    throw new Error(`Unknown MCP_CLIENT: ${clientType}`);
-}
-
 export default function () {
-    const client = createClient();
+    const client = new mcp.StreamableHTTPClient({
+        base_url: 'http://localhost:3001',
+    });
 
-    console.log(`MCP (${clientType}) server running:`, client.ping());
+    console.log('MCP (http) server running:', client.ping());
 
     console.log('Tools available:');
     const tools = client.listAllTools().tools;
