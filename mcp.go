@@ -5,6 +5,7 @@ import (
 	"crypto/tls"
 	"fmt"
 	"net/http"
+	"os"
 	"os/exec"
 	"time"
 
@@ -69,11 +70,12 @@ type mcpMetrics struct {
 // ClientConfig represents the configuration for the MCP client
 type ClientConfig struct {
 	// Stdio
-	Path string
-	Args []string
-	Env  map[string]string
+	Path  string
+	Args  []string
+	Env   map[string]string
+	Debug bool
 
-	// SSE
+	// SSE and Streamable HTTP
 	BaseURL string
 	Timeout time.Duration
 }
@@ -106,7 +108,10 @@ func (m *MCPInstance) newStdioClient(c sobek.ConstructorCall, rt *sobek.Runtime)
 	for k, v := range cfg.Env {
 		cmd.Env = append(cmd.Env, fmt.Sprintf("%s=%s", k, v))
 	}
-	//cmd.Stderr = os.Stderr
+
+	if cfg.Debug {
+		cmd.Stderr = os.Stderr
+	}
 
 	transport := mcp.NewCommandTransport(cmd)
 
